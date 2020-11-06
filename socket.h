@@ -3,6 +3,7 @@
 
 #define h_addr h_addr_list[0]
 #define buf_size 10000
+
 typedef struct net_data{
 	const char *hostname;
 	const char *host;
@@ -19,11 +20,10 @@ typedef struct thread_args{
 struct sockaddr_in server;
 struct hostent *host;
 
-//void SockInit(thread_args_t *ThreadArgs);
-void CreateSock(int *sockfd);
-void SockConfigure(struct sockaddr_in *server, struct hostent *host, const char *hostname);
+void *SockInit(void *ThreadArgs);
+void  ParseHOST_TREE(net_data_t *NetData, const char *hostname, const char *port);
+void  gGetMsg(const char *TREE, const char *HOST, net_data_t NetData);
 
 char *ParseHTTP(const char *hostname);
-//void SockConnect(int *sockfd,int t_len,int f_len, struct sockaddr_in server, const char msg,const char filename, FILE *file, char s_reply );
 
 #endif
