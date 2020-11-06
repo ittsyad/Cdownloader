@@ -1,7 +1,7 @@
 CC=gcc
-STANDART=-std=c17
+STANDART=-std=c99
 all:
-	$(CC) $(STANDART) socket.c -o a
+	$(CC) $(STANDART) socket.c -o a -lpthread
 
 :
 	

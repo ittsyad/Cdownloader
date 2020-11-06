@@ -3,14 +3,23 @@
 
 #define h_addr h_addr_list[0]
 #define buf_size 10000
-#define IS_HOST true
-#define IS_TREE false
+typedef struct net_data{
+	const char *hostname;
+	const char *host;
+	const char *tree;
+	const char *port;
+	const char *msg;
+} net_data_t;
+typedef struct thread_args{
+	const char* msg;
+	const char* filename;
+	const char* host;
+} thread_args_t;
 
-typedef struct net_data net_data_t;
 struct sockaddr_in server;
 struct hostent *host;
 
-void SockInit(const char *msg, const char *filename, const char *hostname);
+//void SockInit(thread_args_t *ThreadArgs);
 void CreateSock(int *sockfd);
 void SockConfigure(struct sockaddr_in *server, struct hostent *host, const char *hostname);
 
