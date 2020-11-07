@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <string.h>
 #include <errno.h>
+#include <memory.h>
 #include <arpa/inet.h>
 #include <pthread.h>
 #include "socket.h"
@@ -17,10 +18,11 @@
 void *SockInit(void *ThreadArgs){ 
     int   t_len = 0;
     int   f_len = 99353;
-    thread_args_t *t_args = ThreadArgs;
-    char *hostname = t_args->host;
-    char *msg      = t_args->msg;
-    char *filename = t_args->filename; 
+    thread_args_t *at_args = (thread_args_t *)ThreadArgs;
+	thread_args_t *t_args = (thread_args_t *)malloc(sizeof(thread_args_t));
+    t_args->filename = at_args->filename;
+	t_args->msg = at_args->msg;
+	t_args->host = at_args->host;
     
     char  s_reply[buf_size]; 
     
@@ -32,7 +34,7 @@ void *SockInit(void *ThreadArgs){
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd == -1) { fprintf(stdout, "Socket creation failed"); }	
     
-    host = gethostbyname(hostname);  
+    host = gethostbyname(t_args->host);  
     server.sin_addr = *((struct in_addr *)host->h_addr);
     server.sin_family = AF_INET;
     server.sin_port = htons(80);
@@ -40,12 +42,12 @@ void *SockInit(void *ThreadArgs){
     if (connect(sockfd, (struct sockaddr *)&server, sizeof(server)) < 0){
 	    fprintf(stdout, "Connection failed");
     }
-    if (send(sockfd, msg, strlen(msg), 0) <  0){
+    if (send(sockfd, t_args->msg, strlen(t_args->msg), 0) <  0){
 	    fprintf(stdout,"Send failed");
     }   
     
-    remove(filename);
-    file = fopen(filename, "ab");
+    remove(t_args->filename);
+    file = fopen(t_args->filename, "ab");
 
     if (file == NULL) { fprintf(stdout, "Error opening file"); }   
     	
@@ -59,6 +61,7 @@ void *SockInit(void *ThreadArgs){
 	printf("\nReceived byte size = %d\nTotal lenght = %d", recieved_len, t_len);
 	}
 	fclose(file);
+	pthread_exit(0);
 }
 char *ParseHTTP(const char *hostname){
 	char s[9];
@@ -74,10 +77,17 @@ void ParseHOST_TREE(net_data_t *NetData, const char *hostname, const char *port)
 	NetData->host = host;
 	NetData->tree = page;
 }
-void gGetMsg(const char* TREE, const char *HOST, net_data_t *NetData){
-	char buf[100];
-	snprintf(buf, sizeof(buf), "GET %s HTTP/1.1\r\nHost: %s\r\n\r\n Connection: keep-alive\r\n\r\n Keep-Alive: 300\r\n", TREE, HOST);
-	NetData->msg = buf;	
+void gGetMsg(char *tree, char *host){
+	int BUF_SIZE =  150; // need to figure out what actual strlen of get is
+	// host and data are corruprruptinh here
+	strcpy(buf, "GET ");
+	strcat(buf, tree);
+	strcat(buf, "HTTP/1.1\r\nHost: ");
+	strcat(buf, host);
+	strcat(buf, "\r\n\r\n Connection: keep-alive\r\n\r\n Keep-Alive: 300\r\n");
+	printf("%s", buf)
+;
+
 }
 // http://www.axmag.com/download/pdfurl-guide.pdf
 int main(int argc, char **argv){	
@@ -85,14 +95,14 @@ int main(int argc, char **argv){
 	NetData.hostname = "http://www.axmag.com/download/pdfurl-guide.pdf";	
 	NetData.port = ParseHTTP(NetData.hostname);
 	ParseHOST_TREE(&NetData, NetData.hostname, NetData.port);
-	gGetMsg(NetData.tree, NetData.host, &NetData);
+	gGetMsg(NetData.tree, NetData.host);
 	const char *filename = "111.pdf";	
 
 	thread_args_t ThreadArgs;
 	ThreadArgs = (thread_args_t){
 		.msg     = NetData.msg,
 		.filename= filename,
-	       	.host    = NetData.host};	
+	    .host    = NetData.host};
 	pthread_t thread_1;
 	pthread_create(&thread_1, NULL, SockInit, &ThreadArgs);
 	pthread_join(thread_1, NULL);

@@ -22,7 +22,7 @@ struct hostent *host;
 
 void *SockInit(void *ThreadArgs);
 void  ParseHOST_TREE(net_data_t *NetData, const char *hostname, const char *port);
-void  gGetMsg(const char *TREE, const char *HOST, net_data_t NetData);
+void  gGetMsg(char *tree, char *host);
 
 char *ParseHTTP(const char *hostname);
 
