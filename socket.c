@@ -61,6 +61,7 @@ void *SockInit(void *ThreadArgs){
 	printf("\nReceived byte size = %d\nTotal lenght = %d", recieved_len, t_len);
 	}
 	fclose(file);
+	free(t_args);
 	pthread_exit(0);
 }
 char *ParseHTTP(const char *hostname){
@@ -72,22 +73,15 @@ char *ParseHTTP(const char *hostname){
 void ParseHOST_TREE(net_data_t *NetData, const char *hostname, const char *port){
 	char page[100];
 	char tmp[100];
-	char host[1000];
+	char host[75];
 	sscanf(hostname,"%*[^:]%*[:/]%[^/]%[^\n]",host, page); 
 	NetData->host = host;
-	NetData->tree = page;
+	NetData->tree = page; 
 }
-void gGetMsg(char *tree, char *host){
-	int BUF_SIZE =  150; // need to figure out what actual strlen of get is
-	// host and data are corruprruptinh here
-	strcpy(buf, "GET ");
-	strcat(buf, tree);
-	strcat(buf, "HTTP/1.1\r\nHost: ");
-	strcat(buf, host);
-	strcat(buf, "\r\n\r\n Connection: keep-alive\r\n\r\n Keep-Alive: 300\r\n");
-	printf("%s", buf)
-;
-
+void gGetMsg(net_data_t *NetData, char *tree, char *host){
+	char return_value[135];
+	sprintf(return_value, "GET %s HTTP/1.1\r\nHost: %s\r\n\r\n Connection: keep-alive\r\n\r\n Keep-Alive: 300\r\n", tree, host);
+	NetData->msg = return_value;
 }
 // http://www.axmag.com/download/pdfurl-guide.pdf
 int main(int argc, char **argv){	
@@ -95,7 +89,7 @@ int main(int argc, char **argv){
 	NetData.hostname = "http://www.axmag.com/download/pdfurl-guide.pdf";	
 	NetData.port = ParseHTTP(NetData.hostname);
 	ParseHOST_TREE(&NetData, NetData.hostname, NetData.port);
-	gGetMsg(NetData.tree, NetData.host);
+    gGetMsg(&NetData, NetData.tree, NetData.host);
 	const char *filename = "111.pdf";	
 
 	thread_args_t ThreadArgs;
